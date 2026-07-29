@@ -1,26 +1,22 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 from pathlib import Path
-from fastapi import HTTPException
-
 import joblib
 import logging
 
 app = FastAPI()
-logging.basicConfig(
-    level=logging.INFO
-)
 
-# 1. CURRENT_DIR points to the 'app' folder
+logging.basicConfig(level=logging.INFO)
+
+# Path to model
 CURRENT_DIR = Path(__file__).resolve().parent
-# 2. Add .parent to step up out of 'app' into the project root
 MODEL_FILE = CURRENT_DIR.parent / "models" / "house_price_model.pkl"
 
-
-# Now it loads perfectly, permanently, without you thinking about it
+# Load model once at startup
 model = joblib.load(MODEL_FILE)
 
-# called pydantic in python (ur dto)to validate the request body
+
+# Request DTO
 class HouseRequest(BaseModel):
     MedInc: float = Field(gt=0)
     HouseAge: float = Field(gt=0)
@@ -30,6 +26,17 @@ class HouseRequest(BaseModel):
     AveOccup: float = Field(gt=0)
     Latitude: float
     Longitude: float
+
+
+# Root endpoint
+@app.get("/")
+def home():
+    return {
+        "message": "House Price Prediction API is running"
+    }
+
+
+# Prediction endpoint
 @app.post("/predict")
 def predict(request: HouseRequest):
 
@@ -48,12 +55,15 @@ def predict(request: HouseRequest):
 
         prediction = model.predict(features)
 
+        logging.info(f"Prediction generated: {prediction[0]}")
+
         return {
-            "predicted_house_price":
-            float(prediction[0])
+            "predicted_house_price": float(prediction[0])
         }
 
     except Exception as e:
+
+        logging.error(str(e))
 
         raise HTTPException(
             status_code=500,
