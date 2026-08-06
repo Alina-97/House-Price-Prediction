@@ -17,6 +17,8 @@ model = joblib.load(MODEL_FILE)
 
 
 # Request DTO
+from pydantic import BaseModel, ConfigDict, Field
+
 class HouseRequest(BaseModel):
     MedInc: float = Field(gt=0)
     HouseAge: float = Field(gt=0)
@@ -27,6 +29,20 @@ class HouseRequest(BaseModel):
     Latitude: float
     Longitude: float
 
+    model_config = ConfigDict(
+        json_schema_extra={
+            "example": {
+                "MedInc": 5.8412,
+                "HouseAge": 34,
+                "AveRooms": 6.1245,
+                "AveBedrms": 1.0204,
+                "Population": 2405,
+                "AveOccup": 2.8715,
+                "Latitude": 34.0522,
+                "Longitude": -118.2437
+            }
+        }
+    )
 
 # Root endpoint
 @app.get("/")
